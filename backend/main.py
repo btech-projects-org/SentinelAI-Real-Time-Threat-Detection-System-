@@ -1,12 +1,17 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, File, UploadFile, Form
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, File, UploadFile, Form, Depends, HTTPException, status, Security
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from backend.config.config import get_settings
 from backend.database.mongodb import db
-from backend.services.dl_threat_engine import dl_threat_engine  # Deep Learning Engine
+from backend.services.dl_threat_engine import dl_threat_engine
+from backend.services.telegram_service import telegram_service
 from backend.services.telegram_service import telegram_service
 from backend.mcp_client.mcp_client import mcp_client
+from backend.auth import security, deps
+from backend.schemas.criminal import CriminalCreate
 import logging
 import cv2
 import numpy as np
@@ -77,13 +82,13 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request, call_next):
         # Allow health and docs without limit
-        if request.url.path in ("/health", "/docs", "/openapi.json"):
+        if request.url.path in ("/health", "/docs", "/openapi.json", "/api/v1/token"):
             return await call_next(request)
-
-        # Bypass limits for local development to avoid 429s when testing
+        
+        # Production Hardening: Removed localhost bypass
+        # All clients must respect rate limits
         client_ip = request.client.host if request.client else "unknown"
-        if client_ip in ("127.0.0.1", "::1", "localhost"):
-            return await call_next(request)
+
 
         limit, window = self._get_limits(request.url.path)
         now = time.time()
@@ -129,14 +134,19 @@ def serialize_for_json(obj):
         return obj.isoformat()
     return obj
 
-# CORS (Allow Frontend)
+# CORS (Strict Production Config)
+origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",")]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+
+# HTTPS Redirect (Enable in Production)
+if not settings.DEBUG:
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 # Rate limiting to mitigate DoS (defaults: 60 req/min per IP)
 rate_limit_paths = {
@@ -188,8 +198,39 @@ async def threat_engine_status():
         "detection_mode": "DEEP_LEARNING"
     }
 
+@app.post("/api/v1/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    Exchange username and password for JWT access token.
+    For this single-admin system, username must be 'admin' and password matches env.
+    """
+    if form_data.username != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Verify password against settings.ADMIN_PASSWORD (simple matching as required by user for now)
+    # Ideally use hash, but user prompt said 'simple system where admin password is stored in .env'
+    # To be secure, we should verify form_data.password == settings.ADMIN_PASSWORD
+    if form_data.password != settings.ADMIN_PASSWORD:
+         raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = security.create_access_token(
+        subject=form_data.username
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
 @app.post("/api/v1/detect-frame")
-async def detect_frame(file: UploadFile = File(...)):
+async def detect_frame(
+    file: UploadFile = File(...),
+    current_user: str = Depends(deps.get_current_user)
+):
     """
     REST endpoint for real-time frame detection.
     Accepts JPEG/PNG frame and returns detections.
@@ -250,14 +291,17 @@ async def detect_frame(file: UploadFile = File(...)):
 
 @app.post("/api/v1/criminals/register")
 async def register_criminal(
-    criminal_id: str = Form(...),
-    name: str = Form(...),
-    threat_level: str = Form(default="MEDIUM"),
-    description: str = Form(default=""),
-    image: UploadFile = File(...)
+    criminal_data: CriminalCreate = Depends(CriminalCreate.as_form),
+    image: UploadFile = File(...),
+    current_user: str = Depends(deps.get_current_user)
 ):
     """Register a criminal with biometric data"""
     try:
+        # Pydantic has validated the input
+        criminal_id = criminal_data.criminal_id
+        name = criminal_data.name
+        threat_level = criminal_data.threat_level
+        description = criminal_data.description
         # Read image file
         image_data = await image.read()
         if not image_data:
@@ -372,7 +416,7 @@ async def get_criminal(criminal_id: str):
         }
 
 @app.post("/api/v1/criminals/reload")
-async def reload_criminals():
+async def reload_criminals(current_user: str = Depends(deps.get_current_user)):
     """Manually reload all criminal faces from database into memory"""
     try:
         await dl_threat_engine.load_criminals_from_db(db)

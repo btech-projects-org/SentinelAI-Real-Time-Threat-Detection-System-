@@ -158,8 +158,11 @@ class DeepLearningThreatEngine:
                                 except Exception as e:
                                     logger.error(f"   ❌ DeepFace error for {criminal_id}: {e}")
                             
-                            # ALWAYS store raw face for fallback histogram matching
-                            self.criminal_faces[criminal_id] = img
+                            # MEMORY OPTIMIZATION: Only store raw faces if we are using the fallback system
+                            if not self.deepface_available:
+                                self.criminal_faces[criminal_id] = img
+                                logger.info(f"   ✅ {criminal.get('name')} - raw face loaded (fallback)")
+                            
                             self.criminals_data[criminal_id] = {
                                 'name': criminal.get('name', 'Unknown'),
                                 'threat_level': criminal.get('threat_level', 'MEDIUM'),
@@ -167,8 +170,6 @@ class DeepLearningThreatEngine:
                                 'criminal_id': criminal_id
                             }
                             loaded_count += 1
-                            if not self.deepface_available:
-                                logger.info(f"   ✅ {criminal.get('name')} - raw face loaded (fallback)")
                         else:
                             logger.warning(f"   ⚠️  Failed to decode image for {criminal_id}")
                     except Exception as e:
