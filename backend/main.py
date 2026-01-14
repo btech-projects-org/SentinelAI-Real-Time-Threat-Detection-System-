@@ -1,9 +1,52 @@
 import sys
 import os
+import subprocess
 from pathlib import Path
 
 # Robustness Patch: Add project root to sys.path to allow running executing this file directly
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+# --- AUTO-VENV SWITCHER ---
+# If running with global python, switch to venv automatically
+def ensure_venv():
+    # Check if running in a virtual environment
+    is_venv = (hasattr(sys, 'real_prefix') or
+               (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
+    
+    if not is_venv:
+        print("🔄 Checking for virtual environment...")
+        project_root = Path(__file__).resolve().parent.parent
+        venv_path = None
+        
+        # Check potential venv locations
+        for venv_name in [".venv", "venv"]:
+            possible_path = project_root / venv_name / "Scripts" / "python.exe"
+            if possible_path.exists():
+                venv_path = possible_path
+                break
+        
+        if venv_path:
+            print(f"✅ Found venv at: {venv_path}")
+            print(f"🔄 Switching to virtual environment...")
+            
+            # Re-execute this script with the venv python
+            # Pass all original arguments
+            args = [str(venv_path), __file__] + sys.argv[1:]
+            
+            # Flush stdout before switch
+            sys.stdout.flush()
+            
+            try:
+                subprocess.run(args)
+                sys.exit(0) # Exit the global python process after child finishes
+            except Exception as e:
+                print(f"❌ Failed to switch to venv: {e}")
+                # Fallthrough to try running anyway (might fail modules)
+        else:
+             print("⚠️  No virtual environment found. Running with global Python.")
+
+ensure_venv()
+# ---------------------------
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, File, UploadFile, Form, Depends, HTTPException, status, Security
 from fastapi.middleware.cors import CORSMiddleware
