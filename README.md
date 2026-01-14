@@ -1,78 +1,83 @@
+# 🛡️ SentinelAI – Threat Detection System
 
-# 🛡️ SentinelAI – Deep Learning Threat Detection System
-
-**Real-time AI surveillance using YOLOv8 and DeepFace neural networks**
-
-## 🧠 Deep Learning Architecture
-
-- **YOLOv8** (Ultralytics) - Weapon/threat detection (80 object classes)
-- **DeepFace (Facenet512)** - Face recognition (99.65% LFW accuracy)
-- **PyTorch 2.2** - Neural network inference
-- **Real-time processing** - 10-20 FPS (CPU), 50-100 FPS (GPU)
-
-## Tech Stack
-
-- **Backend**: Python FastAPI (Async)
-- **Database**: MongoDB Atlas
-- **Alerts**: Telegram Bot
-- **Frontend**: React 19 + Vite + TailwindCSS
-- **Deep Learning**: PyTorch, YOLOv8, DeepFace, TensorFlow
-- **Deployment**: Local (CPU) or GPU-accelerated
-
-## 🚀 Quick Start
-
-### 1. Install Deep Learning Dependencies
-
-```bash
-# Activate virtual environment
-.venv\Scripts\activate
-
-# Install PyTorch (CPU version)
-pip install torch==2.2.0 torchvision==0.17.0 --index-url https://download.pytorch.org/whl/cpu
-
-# Install deep learning frameworks
-pip install ultralytics==8.1.24 deepface==0.0.91 tensorflow==2.15.0
-
-# Or install all dependencies
-pip install -r requirements.txt
-```
-
-### 2. Configure Environment
-
-Update `.env` with your credentials:
-
-```dotenv
-MONGO_URI=mongodb://localhost:27017
-JWT_SECRET=your-strong-secret-key-minimum-32-characters
-
-# Optional: AI enhancements
-GEMINI_API_KEY=your-gemini-api-key
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token
-TELEGRAM_CHAT_ID=your-telegram-chat-id
-```
-
-### 3. Start Backend (Models Auto-Download)
-
-```bash
-cd backend
-python main.py
-```
-
-**First run:** YOLOv8 and DeepFace models will auto-download (~650MB)
-
-### 4. Start Frontend
-
-```bash
-npm install
-npm run dev
-```
-
-**Access:** http://localhost:5173
+**A Smart Security Camera System that detects Weapons, Fighting, and Criminals using AI.**
 
 ---
 
-## 📖 Full Documentation
+## 🚀 Quick Start Guide (For Students)
 
-- **[DEEP_LEARNING_SETUP.md](DEEP_LEARNING_SETUP.md)** - Complete setup guide
-- **[PRODUCTION_CERTIFICATION_REPORT.md](PRODUCTION_CERTIFICATION_REPORT.md)** - QA audit report
-- **[TESTING_HISTORY.md](TESTING_HISTORY.md)** - Testing records
+Follow these simple steps to run the project on your Windows laptop.
+
+### Step 1: Install Requirements
+Before starting, make sure you have these two programs installed:
+
+1.  **Python (v3.10 or newer)**
+    *   [Download Here](https://www.python.org/downloads/)
+    *   **IMPORTANT:** During installation, check the box that says **"Add Python to PATH"**.
+2.  **MongoDB Community Server**
+    *   [Download Here](https://www.mongodb.com/try/download/community)
+    *   Install with default settings (Next > Next > Install).
+
+### Step 2: Configure the Secret Keys
+The system needs a password file to work secure.
+1.  Copy the file named `.env.example` and rename it to `.env`.
+2.  (Optional) If you want real Telegram alerts, open `.env` with Notepad and add your Bot Token.
+    *   *For a demo, you can leave the default values.*
+
+### Step 3: Run the System
+We made it easy! You don't need to type commands.
+
+1.  Find the file **`start_server.bat`** in the main folder.
+2.  **Double-click** it.
+3.  A black window will open. It will automatically:
+    *   Install all necessary AI libraries.
+    *   Download the brain of the AI (Models).
+    *   Start the server.
+    *   *First time setup may take 5-10 minutes. Please be patient!*
+
+### Step 4: Access the Dashboard
+Once the black window says `Application startup complete`:
+1.  Open Chrome or Edge.
+2.  Go to: **[http://localhost:5173](http://localhost:5173)**
+3.  Login with these details:
+    *   **Username:** `admin`
+    *   **Password:** `SentinelAdmin2026!`
+
+---
+
+## 🎮 How to Test It
+
+### 1. Weapon Detection (YOLOv8)
+*   Hold up a pair of **scissors**, a **baseball bat**, or a toy **gun** to your webcam.
+*   The system will draw a red box around it and flash "WEAPON DETECTED".
+
+### 2. Criminal Detection (DeepFace)
+*   Go to the "Criminal Database" tab.
+*   Upload a photo of yourself (or a friend) and give it a name (e.g., "John Doe") and Threat Level "HIGH".
+*   Go back to "Live Feed".
+*   When that person appears on camera, the AI will recognize them and trigger an alert!
+
+### 3. Fighting Detection
+*   If two people get very close and make aggressive movements (overlapping boxes), the system detects "VIOLENCE".
+
+---
+
+## ❓ Troubleshooting
+
+**Q: The black window closes immediately!**
+A: You probably don't have Python installed correctly. Re-install Python and **make sure to check "Add to PATH"**.
+
+**Q: "MongoTimeoutError" or Database error?**
+A: Make sure MongoDB is running. Open "Task Manager" -> "Services" and check if `MongoDB` is Running.
+
+**Q: White screen on localhost:5173?**
+A: Make sure the black window (Server) is still open. Do not close it!
+
+---
+
+## 👨‍� For Developers (Technical Details)
+*   **Backend:** FastAPI (Python)
+*   **AI Models:** YOLOv8n (Object Detection), Facenet512 (Face Recognition)
+*   **Frontend:** React + Vite
+*   **Security:** JWT Authentication, ISO 27001 Compliance
+*   **Report:** See `PRODUCTION_CERTIFICATION_REPORT_V2.md` for security audit details.
