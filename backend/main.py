@@ -1,3 +1,10 @@
+import sys
+import os
+from pathlib import Path
+
+# Robustness Patch: Add project root to sys.path to allow running executing this file directly
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, File, UploadFile, Form, Depends, HTTPException, status, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
