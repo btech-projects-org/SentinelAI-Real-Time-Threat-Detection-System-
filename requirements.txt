@@ -1,0 +1,48 @@
+# SentinelAI - Project Infrastructure Requirements
+# Consolidated list for Backend (Python), AI (CV/ML), and System Utilities
+
+# --- BACKEND FRAMEWORK ---
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+python-dotenv==1.0.1
+pydantic==2.6.3
+pydantic-settings==2.2.1
+
+# --- DATABASE & VAULT (MongoDB Atlas) ---
+motor==3.3.2
+pymongo[srv]==4.6.2
+cryptography==42.0.5
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# --- AI & INFERENCE (Google Gemini / GenAI) ---
+google-generativeai==0.4.1
+
+# --- COMPUTER VISION & SIGNAL PROCESSING ---
+opencv-python-headless==4.9.0.80
+mediapipe==0.10.31
+numpy==1.26.4
+pillow==10.2.0
+
+# --- DEEP LEARNING FRAMEWORKS ---
+# Pins adjusted for Python 3.12 compatibility
+torch==2.2.0
+torchvision==0.17.0
+ultralytics==8.3.75
+deepface==0.0.93
+tensorflow==2.16.1
+onnxruntime==1.17.1
+
+# --- COMMUNICATION BRIDGES ---
+python-telegram-bot==21.0.1
+httpx==0.27.0
+websockets==12.0
+
+# --- SYSTEM UTILITIES ---
+python-multipart==0.0.9
+certifi==2024.2.2
+
+# --- OPTIONAL: HARDWARE ACCELERATION ---
+# Uncomment for GPU Support (CUDA 11.8+)
+# onnxruntime-gpu==1.17.1
+# torch --index-url https://download.pytorch.org/whl/cu118
